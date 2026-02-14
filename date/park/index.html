@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARKDATE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            overflow-x: hidden;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8C8 100%);
+        }
+
+        .scene {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .scene.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scene.fade-in {
+            opacity: 1;
+        }
+
+        /* Welcome Scene */
+        #welcome {
+            background: linear-gradient(to bottom, #FFB6C1 0%, #87CEEB 50%, #98D8C8 100%);
+        }
+
+        .welcome-content {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 60px 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 500px;
+        }
+
+        .welcome-content h1 {
+            font-size: 3em;
+            color: #D87093;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .btn {
+            background: #FF69B4;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Georgia', serif;
+        }
+
+        .btn:hover {
+            background: #FF1493;
+            transform: scale(1.05);
+        }
+
+        /* Seating Scene */
+        .seating-content {
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .seating-content h2 {
+            font-size: 2.5em;
+            color: #2F4F2F;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #8FBC8F;
+            padding: 30px 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.1em;
+            color: #2F4F2F;
+            font-family: 'Georgia', serif;
+        }
+
+        .option-btn:hover {
+            background: #8FBC8F;
+            color: white;
+            transform: translateY(-5px);
+        }
+
+        /* Park Scene */
+        #park {
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8C8 60%, #90EE90 100%);
+        }
+
+        .park-content {
+            text-align: center;
+            max-width: 600px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .sun {
+            position: absolute;
+            top: 50px;
+            right: 100px;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, #FFD700 0%, #FFA500 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 60px rgba(255, 215, 0, 0.8);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .grass {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(to bottom, transparent 0%, #228B22 100%);
+        }
+
+        .dialogue-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            margin: 20px 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            opacity: 0;
+            animation: fadeIn 1s ease-in forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .dialogue-box p {
+            font-size: 1.3em;
+            color: #2F4F2F;
+            line-height: 1.6;
+        }
+
+        /* Flowers Scene */
+        .flowers-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .flower {
+            font-size: 4em;
+            animation: grow 0.5s ease-out forwards;
+            opacity: 0;
+        }
+
+        .flower:nth-child(1) { animation-delay: 0.1s; }
+        .flower:nth-child(2) { animation-delay: 0.2s; }
+        .flower:nth-child(3) { animation-delay: 0.3s; }
+        .flower:nth-child(4) { animation-delay: 0.4s; }
+        .flower:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes grow {
+            from {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) rotate(360deg);
+                opacity: 1;
+            }
+        }
+
+        /* Questions Container */
+        .questions-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Question Group */
+        .question-group {
+            display: none;
+            width: 100%;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        .question-group.show {
+            opacity: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .question-group.fade-out {
+            opacity: 0;
+        }
+
+        .question-heading {
+            display: block;
+            font-size: 2.5em;
+            color: #2F4F2F;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
+            font-weight: normal;
+            margin-bottom: 40px;
+        }
+
+        .answer-input {
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #8FBC8F;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 500px;
+            min-height: 120px;
+            font-size: 1.2em;
+            font-family: 'Georgia', serif;
+            color: #2F4F2F;
+            resize: none;
+            text-align: center;
+            line-height: 1.6;
+            box-sizing: border-box;
+        }
+
+        .answer-input:hover {
+            background: #8FBC8F;
+            color: white;
+            transform: translateY(-5px);
+            transition: all 0.3s;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            background: #8FBC8F;
+            color: white;
+            border-color: #FF69B4;
+        }
+
+        .answer-input::placeholder {
+            color: #666;
+            opacity: 0.7;
+        }
+
+        .answer-input:hover::placeholder,
+        .answer-input:focus::placeholder {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .next-btn {
+            background: #FF69B4;
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.3em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Georgia', serif;
+        }
+
+        .next-btn:hover {
+            background: #FF1493;
+            transform: scale(1.05);
+        }
+
+        .next-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        /* Sunset Scene */
+        #sunset {
+            background: linear-gradient(to bottom, 
+                #FF6B6B 0%, 
+                #FFA07A 20%, 
+                #FFD700 40%, 
+                #FF69B4 60%, 
+                #9370DB 80%, 
+                #4B0082 100%);
+            animation: sunsetGlow 10s ease-in-out infinite;
+        }
+
+        @keyframes sunsetGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .sunset-sun {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, #FF4500 0%, #FF6347 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 100px rgba(255, 69, 0, 0.8);
+            animation: setSun 15s ease-in-out infinite;
+        }
+
+        @keyframes setSun {
+            0%, 100% { top: 40%; }
+            50% { top: 50%; }
+        }
+
+        @media (max-width: 600px) {
+            .options {
+                grid-template-columns: 1fr;
+            }
+            
+            .sun, .sunset-sun {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .welcome-content h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Scene -->
+    <div id="welcome" class="scene active">
+        <div class="welcome-content">
+            <h1>Park chalogi...bagal mai hii haii</h1>
+            <button class="btn" onclick="goToSeating()">Chaloo🌸</button>
+        </div>
+    </div>
+
+    <!-- Seating Scene -->
+    <div id="seating" class="scene">
+        <div class="seating-content">
+            <h2>Where do you want to sit?</h2>
+            <form id="seatingForm" action="https://formspree.io/f/" method="POST">
+                <div class="options">
+                    <button type="button" class="option-btn" onclick="selectSeating('Option 1')">
+                        🌳 On the grass
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectSeating('Option 2')">
+                        🪑 Bench maii
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectSeating('Option 3')">
+                        🌊 next to water bodyy
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectSeating('Option 4')">
+                        🌺🌳 Beside a tree
+                    </button>
+                </div>
+                <input type="hidden" name="seating_choice" id="seatingChoice">
+            </form>
+        </div>
+    </div>
+
+    <!-- Park Scene -->
+    <div id="park" class="scene">
+        <div class="sun"></div>
+        <div class="grass"></div>
+        <div class="park-content">
+            <div class="dialogue-box">
+                <p id="parkMessage">Lo flowers betichod</p>
+                <button class="btn" id="findOutBtn" onclick="revealFlowers()" style="margin-top: 20px;">Mu maii lelo💝</button>
+            </div>
+            <div id="flowersContainer" style="display: none;">
+                <div class="flowers-container">
+                    <span class="flower">🌸</span>
+                    <span class="flower">🌺</span>
+                    <span class="flower">🌹</span>
+                    <span class="flower">🌻</span>
+                    <span class="flower">🌷</span>
+                </div>
+                <div class="dialogue-box">
+                    <p>Mu maii leloo😚</p>
+                    <button class="btn" onclick="acceptFlowers()" style="margin-top: 20px;">gaw gaw gaw🥰</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions Scene with MCQ -->
+    <div id="questions" class="scene">
+        <div class="sun"></div>
+        <div class="grass"></div>
+        
+        <div class="questions-container">
+            <div class="question-group" id="q1">
+                <h2 class="question-heading"><br>Mu maii leloo?</h2>
+                <div class="options">
+                    <button type="button" class="option-btn" onclick="selectAnswer(1, 'Option A')">
+                        Mu maii leloo
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectAnswer(1, 'Option B')">
+                        Mu maii leloo
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectAnswer(1, 'Option C')">
+                        Mu maii leloo
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectAnswer(1, 'Option D')">
+                        Mu maii leloo
+                    </button>
+                </div>
+            </div>
+
+            <div class="question-group" id="q2">
+                <h2 class="question-heading"><br>Mu maii leloo</h2>
+                <div class="options">
+                    <button type="button" class="option-btn" onclick="selectAnswer(2, 'Option A')">
+                        Mu maii leloo
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectAnswer(2, 'Option B')">
+                        Mu maii leloo
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectAnswer(2, 'Option C')">
+                        Mu maii leloo
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectAnswer(2, 'Option D')">
+                        Mu maii leloo
+                    </button>
+                </div>
+            </div>
+
+            <div class="question-group" id="q3">
+                <h2 class="question-heading"><br>Mu maii leloo</h2>
+                <div class="options">
+                    <button type="button" class="option-btn" onclick="selectAnswer(3, 'Option A')">
+                        Mu maii leloo
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectAnswer(3, 'Option B')">
+                        Mu maii leloo
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectAnswer(3, 'Option C')">
+                        Mu maii leloo
+                    </button>
+                    <button type="button" class="option-btn" onclick="selectAnswer(3, 'Option D')">
+                        Mu maii leloo
+                    </button>
+                </div>
+            </div>
+
+            <div class="question-group" id="q4">
+                <h2 class="question-heading"><br>Mu maii leloo</h2>
+                <textarea id="answer4" class="answer-input" placeholder="heheee...Mu maii leloo.." rows="3"></textarea>
+                <button class="next-btn" onclick="submitTextAnswer(4)" disabled id="next4">Mu maii logee→</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sunset Scene -->
+    <div id="sunset" class="scene">
+        <div class="sunset-sun"></div>
+        
+        <div class="sunset-text" id="sunsetText1" style="position: absolute; top: 30%; left: 50%; transform: translateX(-50%); text-align: center; opacity: 0; transition: opacity 1s ease;">
+            <p style="font-size: 2.5em; color: white; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); font-style: italic; margin: 0;">
+                "Mu maii leloo"
+            </p>
+        </div>
+        
+        <div class="sunset-text" id="sunsetText2" style="position: absolute; top: 45%; left: 50%; transform: translateX(-50%); text-align: center; width: 80%; max-width: 700px; opacity: 0; transition: opacity 1s ease;">
+            <p style="font-size: 2em; color: white; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); font-style: italic; line-height: 1.6; margin: 0;">
+                "Mu maii leloo?<br>
+                Mu maii leloo <strong>YOU💕</strong>."
+            </p>
+        </div>
+        
+        <div class="sunset-text" id="sunsetText3" style="position: absolute; top: 70%; left: 50%; transform: translateX(-50%); text-align: center; opacity: 0; transition: opacity 1s ease;">
+            <p style="font-size: 1.8em; color: white; text-shadow: 2px 2px 8px rgba(0,0,0,0.5); margin-bottom: 20px;">
+                ❤️
+            </p>
+            <p style="font-size: 1.3em; color: white; text-shadow: 1px 1px 6px rgba(0,0,0,0.5);">
+                Mu maii leloo🌅
+            </p>
+        </div>
+        
+        <button id="endDateBtn" class="btn" onclick="endDate()" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 1s ease;">
+            Mu maii leloo💕
+        </button>
+    </div>
+
+    <script>
+        let currentQuestion = 1;
+        const answers = {};
+        const FORMSPREE_ENDPOINT = 'https://formspree.io';
+
+        function fadeOutScene(sceneId, callback) {
+            const scene = document.getElementById(sceneId);
+            scene.classList.remove('fade-in');
+            setTimeout(() => {
+                scene.classList.remove('active');
+                callback();
+            }, 1000);
+        }
+
+        function fadeInScene(sceneId) {
+            const scene = document.getElementById(sceneId);
+            scene.classList.add('active');
+            setTimeout(() => {
+                scene.classList.add('fade-in');
+            }, 50);
+        }
+
+        function goToSeating() {
+            fadeOutScene('welcome', () => {
+                fadeInScene('seating');
+            });
+        }
+
+        function selectSeating(choice) {
+            document.getElementById('seatingChoice').value = choice;
+            
+            const form = document.getElementById('seatingForm');
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).then(response => {
+                fadeOutScene('seating', () => {
+                    fadeInScene('park');
+                });
+            }).catch(error => {
+                fadeOutScene('seating', () => {
+                    fadeInScene('park');
+                });
+            });
+        }
+
+        function revealFlowers() {
+            document.getElementById('findOutBtn').style.display = 'none';
+            setTimeout(() => {
+                document.getElementById('flowersContainer').style.display = 'block';
+            }, 800);
+        }
+
+        function acceptFlowers() {
+            fadeOutScene('park', () => {
+                fadeInScene('questions');
+                setTimeout(() => {
+                    showNextQuestion();
+                }, 500);
+            });
+        }
+
+        function showNextQuestion() {
+            if (currentQuestion <= 4) {
+                const questionElement = document.getElementById('q' + currentQuestion);
+                questionElement.classList.add('show');
+                
+                // If it's question 4 (text input), enable the button when typing
+                if (currentQuestion === 4) {
+                    const input = document.getElementById('answer4');
+                    const nextBtn = document.getElementById('next4');
+                    
+                    input.addEventListener('input', function() {
+                        if (input.value.trim() !== '') {
+                            nextBtn.disabled = false;
+                        } else {
+                            nextBtn.disabled = true;
+                        }
+                    });
+                }
+            }
+        }
+
+        function submitTextAnswer(questionNum) {
+            const input = document.getElementById('answer' + questionNum);
+            const answer = input.value.trim();
+            
+            if (answer === '') return;
+            
+            // Store answer
+            answers['question' + questionNum] = answer;
+            
+            // Send to Formspree
+            fetch(FORMSPREE_ENDPOINT, {
+                method: 'POST',
+                body: JSON.stringify({
+                    ['question_' + questionNum]: answer
+                }),
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).catch(error => {
+                console.log('Form submission error (continuing anyway):', error);
+            });
+            
+            // Fade out and go to sunset
+            const currentQuestionElement = document.getElementById('q' + questionNum);
+            currentQuestionElement.classList.add('fade-out');
+            
+            setTimeout(() => {
+                fadeOutScene('questions', () => {
+                    fadeInScene('sunset');
+                    startSunsetSequence();
+                });
+            }, 800);
+        }
+
+        function selectAnswer(questionNum, answer) {
+            // Store answer
+            answers['question' + questionNum] = answer;
+            
+            // Send to Formspree
+            fetch(FORMSPREE_ENDPOINT, {
+                method: 'POST',
+                body: JSON.stringify({
+                    ['question_' + questionNum]: answer
+                }),
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).catch(error => {
+                console.log('Form submission error (continuing anyway):', error);
+            });
+            
+            // Fade out current question
+            const currentQuestionElement = document.getElementById('q' + questionNum);
+            currentQuestionElement.classList.add('fade-out');
+            
+            setTimeout(() => {
+                currentQuestionElement.classList.remove('show', 'fade-out');
+                currentQuestionElement.style.display = 'none';
+                
+                if (questionNum < 4) {
+                    currentQuestion++;
+                    showNextQuestion();
+                } else {
+                    fadeOutScene('questions', () => {
+                        fadeInScene('sunset');
+                        startSunsetSequence();
+                    });
+                }
+            }, 800);
+        }
+
+        function startSunsetSequence() {
+            setTimeout(() => {
+                document.getElementById('sunsetText1').style.opacity = '1';
+            }, 1000);
+            
+            setTimeout(() => {
+                document.getElementById('sunsetText1').style.opacity = '0';
+            }, 4000);
+            
+            setTimeout(() => {
+                document.getElementById('sunsetText2').style.opacity = '1';
+            }, 5000);
+            
+            setTimeout(() => {
+                document.getElementById('sunsetText2').style.opacity = '0';
+            }, 9000);
+            
+            setTimeout(() => {
+                document.getElementById('sunsetText3').style.opacity = '1';
+            }, 10000);
+            
+            setTimeout(() => {
+                document.getElementById('endDateBtn').style.opacity = '1';
+            }, 13000);
+        }
+
+        function endDate() {
+            window.location.href = '../chat2.html';
+        }
+
+        // Initialize first scene
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.getElementById('welcome').classList.add('fade-in');
+            }, 100);
+        });
+    </script>
+</body>
+</html>
+

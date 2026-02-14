@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Film Roll Camera Feed</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff0844 0%, #ffb199 50%, #ff5e7e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Floating hearts */
+        body::before,
+        body::after {
+            content: '♥';
+            position: fixed;
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.1);
+            animation: floatHearts 15s infinite ease-in-out;
+            z-index: 1;
+        }
+        
+        body::before {
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        body::after {
+            top: 70%;
+            right: 15%;
+            animation-delay: 7s;
+        }
+        
+        @keyframes floatHearts {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.1; }
+            50% { transform: translateY(-30px) rotate(10deg); opacity: 0.2; }
+        }
+
+        .header {
+            position: absolute;
+            top: 40px;
+            text-align: center;
+            color: white;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 12px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            text-shadow: 0 0 30px rgba(255,255,255,0.5);
+            color: #fff;
+            background: linear-gradient(45deg, #fff, #ffccd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.05);
+            padding: 8px 20px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #ff4d8f;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 143, 0.7); }
+            50% { opacity: 0.8; transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 77, 143, 0); }
+        }
+
+        .film-container {
+            width: 100%;
+            height: 70vh;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Film sprocket holes */
+        .sprocket-top, .sprocket-bottom {
+            position: absolute;
+            width: 100%;
+            height: 40px;
+            background: rgba(0,0,0,0.3);
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            padding: 0 20px;
+            overflow: hidden;
+        }
+
+        .sprocket-top {
+            top: 0;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .sprocket-bottom {
+            bottom: 0;
+            border-top: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .sprocket-hole {
+            width: 15px;
+            height: 20px;
+            background: #0a0a0a;
+            border-radius: 3px;
+            flex-shrink: 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .film-strip {
+            display: flex;
+            gap: 30px;
+            animation: scrollFilm 40s linear infinite;
+            padding: 0 50px;
+            will-change: transform;
+        }
+
+        @keyframes scrollFilm {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .photo-frame {
+            position: relative;
+            min-width: 450px;
+            height: 600px;
+            background: rgba(255,255,255,0.1);
+            border: 3px solid rgba(255,192,203,0.3);
+            box-shadow: 
+                0 10px 40px rgba(255,20,100,0.3),
+                inset 0 0 0 8px rgba(255,255,255,0.1);
+            overflow: hidden;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .photo-frame:hover {
+            transform: scale(1.05);
+            border-color: rgba(255,105,180,0.6);
+            box-shadow: 
+                0 20px 60px rgba(255,20,147,0.5),
+                inset 0 0 0 8px rgba(255,255,255,0.15),
+                0 0 30px rgba(255,182,193,0.4);
+            z-index: 2;
+        }
+
+        .photo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(15%) contrast(1.15) brightness(0.95);
+            transition: filter 0.3s ease;
+        }
+
+        .photo-frame:hover .photo-img {
+            filter: grayscale(0%) contrast(1.2) brightness(1);
+        }
+
+        .photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 25px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 70%, transparent 100%);
+            color: white;
+        }
+
+        .camera-id {
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 3px;
+            color: #ff69b4;
+            text-shadow: 0 0 10px rgba(255,105,180,0.6);
+            margin-bottom: 5px;
+        }
+
+        .timestamp {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            letter-spacing: 1px;
+        }
+
+        /* Film grain texture */
+        .grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.04;
+            z-index: 100;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='3' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            animation: grain 0.3s steps(10) infinite;
+        }
+
+        @keyframes grain {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-5%, -5%); }
+            20% { transform: translate(-10%, 5%); }
+            30% { transform: translate(5%, -10%); }
+            40% { transform: translate(-5%, 15%); }
+            50% { transform: translate(-10%, 5%); }
+            60% { transform: translate(15%, 0); }
+            70% { transform: translate(0, 10%); }
+            80% { transform: translate(-15%, 0); }
+            90% { transform: translate(10%, 5%); }
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.6);
+            z-index: 99;
+        }
+
+        /* Light leak effect */
+        .light-leak {
+            position: absolute;
+            width: 300px;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255,192,203,0.15) 30%,
+                rgba(255,105,180,0.2) 50%,
+                rgba(255,182,193,0.15) 70%,
+                transparent 100%);
+            animation: lightLeak 8s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        @keyframes lightLeak {
+            0%, 100% { left: -300px; opacity: 0; }
+            50% { left: 100%; opacity: 0.6; }
+        }
+
+        .frame-number {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,20,100,0.8);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+            border: 1px solid rgba(255,182,193,0.5);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+                letter-spacing: 6px;
+            }
+
+            .photo-frame {
+                min-width: 300px;
+                height: 400px;
+            }
+
+            .film-container {
+                height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grain"></div>
+    <div class="vignette"></div>
+    
+    <div class="header">
+        <h1>Mu maii leloo</h1>
+        <div class="status">
+            <div class="status-dot"></div>
+            <span>Mu maii leloo</span>
+        </div>
+    </div>
+
+    <div class="film-container">
+        <div class="sprocket-top" id="sprocketTop"></div>
+        <div class="sprocket-bottom" id="sprocketBottom"></div>
+        <div class="light-leak"></div>
+        
+        <div class="film-strip" id="filmStrip">
+            <!-- Photos will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        const photos = [
+            'img0.jpg',
+            'img1.jpg',
+            'img2.jpg',
+            'img3.jpg',
+            'img4.jpg',
+            'img5.jpg',
+            'img6.jpg',
+            'img7.jpg',
+            'img8.jpg',
+            'img9.jpg'
+        ];
+
+        const filmStrip = document.getElementById('filmStrip');
+        const sprocketTop = document.getElementById('sprocketTop');
+        const sprocketBottom = document.getElementById('sprocketBottom');
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: false 
+            });
+        }
+
+        function createPhotoFrame(imgSrc, index) {
+            const frame = document.createElement('div');
+            frame.className = 'photo-frame';
+            
+            frame.innerHTML = `
+                <div class="frame-number">FRAME ${String(index + 1).padStart(3, '0')}</div>
+                <img src="${imgSrc}" alt="Frame ${index + 1}" class="photo-img">
+                <div class="photo-overlay">
+                    <div class="camera-id">CAM ${String(index + 1).padStart(2, '0')}</div>
+                    <div class="timestamp" id="time-${index}"></div>
+                </div>
+            `;
+            
+            return frame;
+        }
+
+        // Create sprocket holes
+        function createSprocketHoles() {
+            for (let i = 0; i < 100; i++) {
+                const holeTop = document.createElement('div');
+                const holeBottom = document.createElement('div');
+                holeTop.className = 'sprocket-hole';
+                holeBottom.className = 'sprocket-hole';
+                sprocketTop.appendChild(holeTop);
+                sprocketBottom.appendChild(holeBottom);
+            }
+        }
+
+        // Duplicate photos for infinite loop
+        const duplicatedPhotos = [...photos, ...photos];
+
+        // Initialize film strip
+        duplicatedPhotos.forEach((photo, index) => {
+            const frame = createPhotoFrame(photo, index);
+            filmStrip.appendChild(frame);
+        });
+
+        createSprocketHoles();
+
+        // Update timestamps
+        function updateTimestamps() {
+            const currentTime = getCurrentTime();
+            duplicatedPhotos.forEach((_, index) => {
+                const timestampEl = document.getElementById(`time-${index}`);
+                if (timestampEl) {
+                    timestampEl.textContent = currentTime;
+                }
+            });
+        }
+
+        updateTimestamps();
+        setInterval(updateTimestamps, 1000);
+
+
+    </script>
+</body>
+</html>
